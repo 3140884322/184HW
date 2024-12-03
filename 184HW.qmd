@@ -1,0 +1,184 @@
+---
+title: "Stat 184 HW"
+author: "Songqi Lin"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+## Question 1
+#| echo: false
+# Define the function
+myFunction <- function(x) {
+  y <- (cos(4 * x) + tan(0.5 * x))^4
+  return(y)
+}
+# Plot the function
+library(ggplot2)
+ggplot(data.frame(x = c(0, 1)), aes(x)) +
+  stat_function(fun = myFunction, color = "blue") +
+  labs(
+    title = "Plot of h(x) = [cos(4x) + tan(0.5x)]^4", 
+    x = "x", 
+    y = "h(x)"
+  )
+
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+## Question 2
+# Load necessary libraries
+library(palmerpenguins)
+library(dplyr)
+library(tidyr)
+library(knitr) # or library(gt) for table formatting
+
+# Prepare the data
+penguin_data <- penguins %>%
+  filter(species == "Adelie") %>%
+  drop_na(body_mass_g, bill_length_mm, bill_depth_mm, flipper_length_mm, sex, island)
+
+# Fit the linear regression model
+penguinModel <- lm(
+  formula = body_mass_g ~ bill_length_mm + bill_depth_mm + flipper_length_mm + sex + island,
+  data = penguin_data
+)
+
+# Extract the model summary and coefficients
+model_summary <- summary(penguinModel)
+coefficients_table <- data.frame(model_summary$coefficients)
+colnames(coefficients_table) <- c("Estimate", "Std. Error", "t value", "Pr(>|t|)")
+
+# Display the table with kable for a polished look
+kable(coefficients_table, caption = "Summary Table for Linear Regression Model Coefficients")
+
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+## Question 3 a and b
+#| echo: false
+library(dplyr)
+
+tortilla_data <- read.csv("tortilla_data.csv")
+
+if ("year" %in% colnames(tortilla_data) && "price" %in% colnames(tortilla_data)) {
+  average_prices <- tortilla_data %>%
+    filter(year %in% c(2007, 2024)) %>%
+    group_by(year) %>%
+    summarise(Average_Price = mean(price, na.rm = TRUE))
+  
+  print(average_prices)
+}
+
+```
+
+```{r}
+#| echo: false
+## Question 3 c 
+if (nrow(average_prices) == 2) {
+  percent_change <- (average_prices$Average_Price[2] - average_prices$Average_Price[1]) /
+    average_prices$Average_Price[1] * 100
+  
+  print(paste("Percent Change: ", round(percent_change, 2), "%"))
+} 
+
+library(ggplot2)
+
+## Question 3 d
+yearly_avg <- tortilla_data %>%
+  group_by(year) %>%
+  summarise(Average_Price = mean(price, na.rm = TRUE))
+ggplot(yearly_avg, aes(x = year, y = Average_Price)) +
+  geom_line(color = "blue", linewidth = 1) +
+  geom_point(color = "red", linewidth = 2) +
+  labs(
+    title = "Average Tortilla Price Over Time (2007-2024)",
+    x = "Year",
+    y = "Average Price (MXN)"
+  ) +
+  theme_minimal()
+
+## Question 3 e
+data_2016 <- tortilla_data %>%
+  filter(year == 2016)
+summary_stats <- data_2016 %>%
+  group_by(state) %>%
+  summarise(
+    Average = mean(price, na.rm = TRUE),
+    Min = min(price, na.rm = TRUE),
+    Max = max(price, na.rm = TRUE),
+    SD = sd(price, na.rm = TRUE)
+  )
+print(summary_stats)
+ggplot(data_2016, aes(x = state, y = price)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(
+    title = "Tortilla Prices by State in 2016",
+    x = "State",
+    y = "Price (MXN)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+## Question 3 f
+#| echo: false
+nuevo_leon_data <- tortilla_data %>%
+  filter(state == "NuevoLeon")
+if (nrow(nuevo_leon_data) > 0) {
+  ggplot(nuevo_leon_data, aes(x = year, y = price, color = storeType)) +
+    geom_line() +
+    geom_point() +
+    labs(
+      title = "Tortilla Prices in Nuevo Leon by Store Type (2007-2024)",
+      x = "Year",
+      y = "Price (MXN)"
+    ) +
+    theme_minimal()
+}
+
+## Question 3 g
+statewise_trends <- tortilla_data %>%
+  group_by(state, year) %>%
+  summarise(Average_Price = mean(price, na.rm = TRUE)) %>%
+  mutate(Percent_Change = 100 * (Average_Price / lag(Average_Price) - 1))
+
+ggplot(statewise_trends, aes(x = year, y = Percent_Change, color = state)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Yearly Percent Change in Tortilla Prices by State (2007-2024)",
+    x = "Year",
+    y = "Percent Change (%)"
+  ) +
+  theme_minimal()
+
+## Question 3 h
+library(dplyr)
+state_variances <- tortilla_data %>%
+  group_by(state, year) %>%
+  summarise(Price_Variance = var(price, na.rm = TRUE)) %>%
+  ungroup()
+ggplot(state_variances, aes(x = year, y = Price_Variance, color = state)) +
+  geom_line() +
+  labs(
+    title = "Variance in Tortilla Prices by State (2007-2024)",
+    x = "Year",
+    y = "Variance in Price (MXN)"
+  ) +
+  theme_minimal()
+
+
+```
